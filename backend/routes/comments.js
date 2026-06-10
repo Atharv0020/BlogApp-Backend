@@ -9,28 +9,45 @@ router.get('/post/:postId', async (req, res) => {
     const comments = await Comment.find({ postId: req.params.postId }).sort({ createdAt: -1 });
     res.json(comments);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Add comment
+// ADD COMMENT - THIS IS THE FIXED VERSION
 router.post('/', auth, async (req, res) => {
   try {
     const { postId, text } = req.body;
-
-    const newComment = new Comment({
-      postId,
+    
+    console.log('Received comment request:');
+    console.log('postId:', postId);
+    console.log('text:', text);
+    console.log('userId:', req.userId);
+    console.log('userName:', req.userName);
+    
+    // Validation
+    if (!postId) {
+      return res.status(400).json({ error: 'Post ID is required' });
+    }
+    
+    if (!text || text.trim() === '') {
+      return res.status(400).json({ error: 'Comment text is required' });
+    }
+    
+    // Create comment
+    const comment = new Comment({
+      postId: postId,
       userId: req.userId,
-      userName: req.userName,
-      text
+      userName: req.userName || 'Anonymous',
+      text: text.trim()
     });
-
-    const comment = await newComment.save();
-    res.json(comment);
+    
+    const savedComment = await comment.save();
+    console.log('Comment saved successfully:', savedComment._id);
+    
+    res.status(201).json(savedComment);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Server error' });
+    console.error('Error saving comment:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -38,20 +55,19 @@ router.post('/', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.id);
-
+    
     if (!comment) {
-      return res.status(404).json({ msg: 'Comment not found' });
+      return res.status(404).json({ error: 'Comment not found' });
     }
-
-    if (comment.userId.toString() !== req.userId) {
-      return res.status(401).json({ msg: 'Not authorized' });
+    
+    if (comment.userId !== req.userId) {
+      return res.status(401).json({ error: 'Not authorized' });
     }
-
+    
     await comment.deleteOne();
-    res.json({ msg: 'Comment deleted' });
+    res.json({ message: 'Comment deleted successfully' });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: err.message });
   }
 });
 

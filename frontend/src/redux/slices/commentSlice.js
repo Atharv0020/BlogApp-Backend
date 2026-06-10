@@ -3,19 +3,24 @@ import axios from 'axios';
 
 const API_URL = 'https://blogapp-backend-q0re.onrender.com/api';
 
+// Fetch comments
 export const fetchComments = createAsyncThunk('comments/fetchComments', async (postId) => {
   const response = await axios.get(`${API_URL}/comments/post/${postId}`);
   return { postId, comments: response.data };
 });
 
-export const addComment = createAsyncThunk('comments/addComment', async (commentData) => {
+// Add comment - FIXED
+export const addComment = createAsyncThunk('comments/addComment', async ({ postId, text }) => {
   const token = localStorage.getItem('token');
-  const response = await axios.post(`${API_URL}/comments`, commentData, {
-    headers: { 'x-auth-token': token }
-  });
+  const response = await axios.post(
+    `${API_URL}/comments`,
+    { postId, text },
+    { headers: { 'x-auth-token': token } }
+  );
   return response.data;
 });
 
+// Delete comment
 export const deleteComment = createAsyncThunk('comments/deleteComment', async (id) => {
   const token = localStorage.getItem('token');
   await axios.delete(`${API_URL}/comments/${id}`, {
@@ -42,7 +47,7 @@ const commentSlice = createSlice({
         if (!state.comments[postId]) {
           state.comments[postId] = [];
         }
-        state.comments[postId].unshift(action.payload);
+        state.comments[postId] = [action.payload, ...state.comments[postId]];
       })
       .addCase(deleteComment.fulfilled, (state, action) => {
         for (let postId in state.comments) {

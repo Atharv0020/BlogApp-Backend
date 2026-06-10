@@ -7,10 +7,11 @@ import { fetchComments, addComment, deleteComment } from '../redux/slices/commen
 const PostDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { user, token } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const { posts } = useSelector((state) => state.posts);
   const { comments } = useSelector((state) => state.comments);
-  const [newComment, setNewComment] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   
   const post = posts.find(p => p._id === id);
   const postComments = comments[id] || [];
@@ -23,7 +24,7 @@ const PostDetail = () => {
   }, [dispatch, id, post]);
 
   const handleLike = () => {
-    if (user && token) {
+    if (user) {
       dispatch(likePost(id));
     } else {
       alert('Please login to like posts');
@@ -32,18 +33,32 @@ const PostDetail = () => {
 
   const handleAddComment = async (e) => {
     e.preventDefault();
-    if (!user || !token) {
+    
+    if (!user) {
       alert('Please login to comment');
       return;
     }
     
-    if (newComment.trim()) {
-      const result = await dispatch(addComment({ postId: id, text: newComment }));
+    if (!commentText.trim()) {
+      alert('Please enter a comment');
+      return;
+    }
+    
+    setSubmitting(true);
+    
+    try {
+      const result = await dispatch(addComment({ postId: id, text: commentText }));
+      
       if (result.payload && result.payload._id) {
-        setNewComment('');
-      } else if (result.error) {
-        alert(result.error || 'Failed to add comment');
+        setCommentText('');
+        alert('Comment added successfully!');
+      } else {
+        alert('Failed to add comment');
       }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -73,35 +88,42 @@ const PostDetail = () => {
       <div className="comments-section">
         <h3>Comments ({postComments.length})</h3>
         
-        {user && token ? (
+        {user ? (
           <form onSubmit={handleAddComment} className="comment-form">
             <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
               placeholder="Write a comment..."
               required
+              rows="3"
             />
-            <button type="submit">Post Comment</button>
+            <button type="submit" disabled={submitting}>
+              {submitting ? 'Posting...' : 'Post Comment'}
+            </button>
           </form>
         ) : (
           <p>Please login to comment</p>
         )}
 
         <div className="comments-list">
-          {postComments.map((comment) => (
-            <div key={comment._id} className="comment">
-              <div className="comment-header">
-                <strong>{comment.userName}</strong>
-                <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
-                {user && user.id === comment.userId && (
-                  <button onClick={() => handleDeleteComment(comment._id)} className="delete-comment">
-                    Delete
-                  </button>
-                )}
+          {postComments.length === 0 ? (
+            <p>No comments yet. Be the first to comment!</p>
+          ) : (
+            postComments.map((comment) => (
+              <div key={comment._id} className="comment">
+                <div className="comment-header">
+                  <strong>{comment.userName}</strong>
+                  <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                  {user && user.id === comment.userId && (
+                    <button onClick={() => handleDeleteComment(comment._id)} className="delete-comment">
+                      Delete
+                    </button>
+                  )}
+                </div>
+                <p>{comment.text}</p>
               </div>
-              <p>{comment.text}</p>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
