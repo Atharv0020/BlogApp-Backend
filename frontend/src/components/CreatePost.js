@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { createPost } from '../redux/slices/postSlice';
@@ -6,12 +6,18 @@ import { createPost } from '../redux/slices/postSlice';
 const CreatePost = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+  const { user, token, loading } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     image: ''
   });
+
+  useEffect(() => {
+    if (!user || !token) {
+      navigate('/login');
+    }
+  }, [user, token, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,9 +26,8 @@ const CreatePost = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Check if user is logged in
-    if (!user) {
-      alert('Please login to create a post');
+    if (!user || !token) {
+      alert('Please login first!');
       navigate('/login');
       return;
     }
@@ -30,14 +35,13 @@ const CreatePost = () => {
     try {
       const result = await dispatch(createPost(formData));
       
-      // Check if post was created successfully
       if (result.payload && result.payload._id) {
         navigate('/');
       } else if (result.error) {
         alert(result.error.message || 'Failed to create post');
       }
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error('Error:', error);
       alert('Something went wrong. Please try again.');
     }
   };
@@ -69,7 +73,9 @@ const CreatePost = () => {
           value={formData.image}
           onChange={handleChange}
         />
-        <button type="submit">Create Post</button>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Creating...' : 'Create Post'}
+        </button>
       </form>
     </div>
   );

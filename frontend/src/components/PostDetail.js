@@ -7,7 +7,7 @@ import { fetchComments, addComment, deleteComment } from '../redux/slices/commen
 const PostDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  const { user, token } = useSelector((state) => state.auth);
   const { posts } = useSelector((state) => state.posts);
   const { comments } = useSelector((state) => state.comments);
   const [newComment, setNewComment] = useState('');
@@ -23,18 +23,27 @@ const PostDetail = () => {
   }, [dispatch, id, post]);
 
   const handleLike = () => {
-    if (user) {
+    if (user && token) {
       dispatch(likePost(id));
     } else {
       alert('Please login to like posts');
     }
   };
 
-  const handleAddComment = (e) => {
+  const handleAddComment = async (e) => {
     e.preventDefault();
+    if (!user || !token) {
+      alert('Please login to comment');
+      return;
+    }
+    
     if (newComment.trim()) {
-      dispatch(addComment({ postId: id, text: newComment }));
-      setNewComment('');
+      const result = await dispatch(addComment({ postId: id, text: newComment }));
+      if (result.payload && result.payload._id) {
+        setNewComment('');
+      } else if (result.error) {
+        alert(result.error || 'Failed to add comment');
+      }
     }
   };
 
@@ -64,7 +73,7 @@ const PostDetail = () => {
       <div className="comments-section">
         <h3>Comments ({postComments.length})</h3>
         
-        {user && (
+        {user && token ? (
           <form onSubmit={handleAddComment} className="comment-form">
             <textarea
               value={newComment}
@@ -74,6 +83,8 @@ const PostDetail = () => {
             />
             <button type="submit">Post Comment</button>
           </form>
+        ) : (
+          <p>Please login to comment</p>
         )}
 
         <div className="comments-list">

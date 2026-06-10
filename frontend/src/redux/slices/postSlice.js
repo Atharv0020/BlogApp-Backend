@@ -8,14 +8,19 @@ export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
   return response.data;
 });
 
-export const createPost = createAsyncThunk('posts/createPost', async (postData, { rejectWithValue }) => {
+export const createPost = createAsyncThunk('posts/createPost', async (postData, { rejectWithValue, getState }) => {
   try {
     const token = localStorage.getItem('token');
+    
     if (!token) {
       return rejectWithValue('No token found. Please login.');
     }
+    
     const response = await axios.post(`${API_URL}/posts`, postData, {
-      headers: { 'x-auth-token': token }
+      headers: { 
+        'x-auth-token': token,
+        'Content-Type': 'application/json'
+      }
     });
     return response.data;
   } catch (error) {
@@ -44,6 +49,7 @@ export const likePost = createAsyncThunk('posts/likePost', async (id, { rejectWi
     if (!token) {
       return rejectWithValue('Please login to like posts');
     }
+    
     const response = await axios.put(`${API_URL}/posts/like/${id}`, {}, {
       headers: { 'x-auth-token': token }
     });
@@ -63,7 +69,6 @@ const postSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Fetch Posts
       .addCase(fetchPosts.pending, (state) => {
         state.loading = true;
       })
@@ -75,7 +80,6 @@ const postSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
       })
-      // Create Post
       .addCase(createPost.pending, (state) => {
         state.loading = true;
       })
@@ -87,16 +91,17 @@ const postSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Delete Post
       .addCase(deletePost.fulfilled, (state, action) => {
         state.posts = state.posts.filter(post => post._id !== action.payload);
       })
-      // Like Post
       .addCase(likePost.fulfilled, (state, action) => {
         const post = state.posts.find(p => p._id === action.payload.id);
         if (post) {
           post.likeCount = action.payload.data.likeCount;
         }
+      })
+      .addCase(likePost.rejected, (state, action) => {
+        console.error('Like failed:', action.payload);
       });
   }
 });
