@@ -2,148 +2,64 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const path = require('path');
 
 dotenv.config();
 
 const app = express();
 
-// ========== CORS CONFIGURATION ==========
-const allowedOrigins = [
-  'https://blog-app-backend-dako.vercel.app',
-  'https://blog-app-backend.vercel.app',
-  'https://blog-app-frontend.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5000'
-];
-
+// CORS Configuration
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      console.log('Blocked origin:', origin);
-      return callback(null, false);
-    }
-    return callback(null, true);
-  },
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
 
-app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ========== MONGODB CONNECTION ==========
+// MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://atharvmore0009_db_user:atharv09@am.lsminjv.mongodb.net/blogapp?retryWrites=true&w=majority';
 
 mongoose.connect(MONGODB_URI)
 .then(() => {
-  console.log('✅ MongoDB Connected Successfully!');
-  console.log('📊 Database: MongoDB Atlas');
+  console.log('MongoDB Connected Successfully');
 })
 .catch(err => {
-  console.log('❌ MongoDB Error:', err.message);
+  console.log('MongoDB Error:', err.message);
 });
 
-// ========== DEBUG ROUTE ==========
-app.get('/debug-routes', (req, res) => {
-  const fs = require('fs');
-  try {
-    const routesDir = path.join(__dirname, 'routes');
-    const files = fs.existsSync(routesDir) ? fs.readdirSync(routesDir) : [];
-    res.json({
-      message: 'Debug information',
-      routesDirectory: routesDir,
-      directoryExists: fs.existsSync(routesDir),
-      files: files,
-      currentDirectory: __dirname,
-      nodeVersion: process.version
-    });
-  } catch (err) {
-    res.json({ error: err.message });
-  }
-});
-
-// ========== API ROUTES ==========
-console.log('📡 Loading API routes...');
-
-try {
-  app.use('/api/auth', require('./routes/auth'));
-  console.log('✅ /api/auth routes loaded');
-} catch (err) {
-  console.log('❌ Failed to load /api/auth:', err.message);
-}
-
-try {
-  app.use('/api/posts', require('./routes/posts'));
-  console.log('✅ /api/posts routes loaded');
-} catch (err) {
-  console.log('❌ Failed to load /api/posts:', err.message);
-}
-
-try {
-  app.use('/api/comments', require('./routes/comments'));
-  console.log('✅ /api/comments routes loaded');
-} catch (err) {
-  console.log('❌ Failed to load /api/comments:', err.message);
-}
-
-// ========== TEST ENDPOINTS ==========
+// Simple test route
 app.get('/', (req, res) => {
-  res.json({
-    message: 'Backend is working!',
-    status: 'online',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      posts: '/api/posts',
-      auth: '/api/auth',
-      comments: '/api/comments'
-    }
-  });
+  res.json({ message: 'Backend is working!' });
 });
 
+// Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    uptime: process.uptime()
-  });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ========== 404 HANDLER - FIXED (removed the invalid * parameter) ==========
+// API Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/posts', require('./routes/posts'));
+app.use('/api/comments', require('./routes/comments'));
+
+// 404 handler - NO WILDCARD CHARACTER
 app.use((req, res) => {
-  res.status(404).json({
+  res.status(404).json({ 
     error: 'Route not found',
-    message: `Cannot ${req.method} ${req.originalUrl}`,
-    availableEndpoints: [
-      'GET /',
-      'GET /health',
-      'GET /debug-routes',
-      'POST /api/auth/register',
-      'POST /api/auth/login',
-      'GET /api/posts',
-      'POST /api/posts',
-      'GET /api/comments/post/:postId',
-      'POST /api/comments'
-    ]
+    path: req.originalUrl 
   });
 });
 
-// ========== ERROR HANDLING MIDDLEWARE ==========
+// Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
-  res.status(500).json({
-    error: 'Internal server error',
-    message: err.message
-  });
+  res.status(500).json({ error: 'Internal server error' });
 });
 
-// ========== START SERVER ==========
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 URL: http://localhost:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Server running on port ${PORT}`);
 });
