@@ -9,7 +9,7 @@ const app = express();
 
 // FIXED CORS - Allow Vercel frontend
 app.use(cors({
-  origin: ['https://blog-app-frontend.vercel.app', 'http://localhost:3000'],
+  origin: ['https://blog-app-backend-ten-mu.vercel.app', 'https://blog-app-frontend.vercel.app', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'x-auth-token']
