@@ -8,34 +8,20 @@ export const fetchComments = createAsyncThunk('comments/fetchComments', async (p
   return { postId, comments: response.data };
 });
 
-export const addComment = createAsyncThunk('comments/addComment', async (commentData, { rejectWithValue }) => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return rejectWithValue('Please login to comment');
-    }
-    const response = await axios.post(`${API_URL}/comments`, commentData, {
-      headers: { 'x-auth-token': token }
-    });
-    return response.data;
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.msg || error.message);
-  }
+export const addComment = createAsyncThunk('comments/addComment', async (commentData) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.post(`${API_URL}/comments`, commentData, {
+    headers: { 'x-auth-token': token }
+  });
+  return response.data;
 });
 
-export const deleteComment = createAsyncThunk('comments/deleteComment', async (id, { rejectWithValue }) => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return rejectWithValue('No token found');
-    }
-    await axios.delete(`${API_URL}/comments/${id}`, {
-      headers: { 'x-auth-token': token }
-    });
-    return id;
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.msg || error.message);
-  }
+export const deleteComment = createAsyncThunk('comments/deleteComment', async (id) => {
+  const token = localStorage.getItem('token');
+  await axios.delete(`${API_URL}/comments/${id}`, {
+    headers: { 'x-auth-token': token }
+  });
+  return id;
 });
 
 const commentSlice = createSlice({

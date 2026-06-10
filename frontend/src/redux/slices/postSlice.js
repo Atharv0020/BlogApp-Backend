@@ -8,55 +8,28 @@ export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
   return response.data;
 });
 
-export const createPost = createAsyncThunk('posts/createPost', async (postData, { rejectWithValue, getState }) => {
-  try {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      return rejectWithValue('No token found. Please login.');
-    }
-    
-    const response = await axios.post(`${API_URL}/posts`, postData, {
-      headers: { 
-        'x-auth-token': token,
-        'Content-Type': 'application/json'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.msg || error.message);
-  }
+export const createPost = createAsyncThunk('posts/createPost', async (postData) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.post(`${API_URL}/posts`, postData, {
+    headers: { 'x-auth-token': token }
+  });
+  return response.data;
 });
 
-export const deletePost = createAsyncThunk('posts/deletePost', async (id, { rejectWithValue }) => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return rejectWithValue('No token found');
-    }
-    await axios.delete(`${API_URL}/posts/${id}`, {
-      headers: { 'x-auth-token': token }
-    });
-    return id;
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.msg || error.message);
-  }
+export const deletePost = createAsyncThunk('posts/deletePost', async (id) => {
+  const token = localStorage.getItem('token');
+  await axios.delete(`${API_URL}/posts/${id}`, {
+    headers: { 'x-auth-token': token }
+  });
+  return id;
 });
 
-export const likePost = createAsyncThunk('posts/likePost', async (id, { rejectWithValue }) => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return rejectWithValue('Please login to like posts');
-    }
-    
-    const response = await axios.put(`${API_URL}/posts/like/${id}`, {}, {
-      headers: { 'x-auth-token': token }
-    });
-    return { id, data: response.data };
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.msg || error.message);
-  }
+export const likePost = createAsyncThunk('posts/likePost', async (id) => {
+  const token = localStorage.getItem('token');
+  const response = await axios.put(`${API_URL}/posts/like/${id}`, {}, {
+    headers: { 'x-auth-token': token }
+  });
+  return { id, data: response.data };
 });
 
 const postSlice = createSlice({
@@ -76,20 +49,12 @@ const postSlice = createSlice({
         state.loading = false;
         state.posts = action.payload;
       })
-      .addCase(fetchPosts.rejected, (state, action) => {
+      .addCase(fetchPosts.rejected, (state) => {
         state.loading = false;
-        state.error = action.error.message;
-      })
-      .addCase(createPost.pending, (state) => {
-        state.loading = true;
+        state.error = 'Failed to fetch posts';
       })
       .addCase(createPost.fulfilled, (state, action) => {
-        state.loading = false;
         state.posts.unshift(action.payload);
-      })
-      .addCase(createPost.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
       })
       .addCase(deletePost.fulfilled, (state, action) => {
         state.posts = state.posts.filter(post => post._id !== action.payload);
@@ -99,9 +64,6 @@ const postSlice = createSlice({
         if (post) {
           post.likeCount = action.payload.data.likeCount;
         }
-      })
-      .addCase(likePost.rejected, (state, action) => {
-        console.error('Like failed:', action.payload);
       });
   }
 });
