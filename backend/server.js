@@ -7,16 +7,11 @@ dotenv.config();
 
 const app = express();
 
-// Enable CORS for all routes
+// CORS setup - NO wildcards
 app.use(cors({
   origin: '*',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+  credentials: true
 }));
-
-// Handle preflight requests for all routes
-app.options('*', cors());
 
 app.use(express.json());
 
@@ -39,7 +34,7 @@ app.use('/api/comments', require('./routes/comments'));
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found', path: req.method + ' ' + req.originalUrl });
+  res.status(404).json({ error: 'Route not found' });
 });
 
 const PORT = process.env.PORT || 5000;
