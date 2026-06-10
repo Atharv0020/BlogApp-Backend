@@ -1,31 +1,33 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'https://blog-backend.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-export const register = createAsyncThunk(
-  'auth/register',
-  async (userData) => {
+export const register = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
+  try {
     const response = await axios.post(`${API_URL}/auth/register`, userData);
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
     return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.msg || error.message);
   }
-);
+});
 
-export const login = createAsyncThunk(
-  'auth/login',
-  async (userData) => {
+export const login = createAsyncThunk('auth/login', async (userData, { rejectWithValue }) => {
+  try {
     const response = await axios.post(`${API_URL}/auth/login`, userData);
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
     return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.msg || error.message);
   }
-);
+});
 
 const authSlice = createSlice({
   name: 'auth',
@@ -45,8 +47,10 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Register
       .addCase(register.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
@@ -55,10 +59,12 @@ const authSlice = createSlice({
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload;
       })
+      // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
@@ -67,7 +73,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload;
       });
   }
 });

@@ -7,24 +7,22 @@ dotenv.config();
 
 const app = express();
 
-// FIXED CORS - Allow Vercel frontend
+// CORS setup
 app.use(cors({
-  origin: ['https://blog-app-backend-ten-mu.vercel.app', 'https://blog-app-frontend.vercel.app', 'http://localhost:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-auth-token']
+  origin: ['https://blog-app-backend-ten-mu.vercel.app', 'http://localhost:3000'],
+  credentials: true
 }));
 
 app.use(express.json());
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://atharvmore0009_db_user:atharvmore09@am.lsminjv.mongodb.net/blogapp';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://atharvmore0009_db_user:atharv09@am.lsminjv.mongodb.net/blogapp';
 
 mongoose.connect(MONGODB_URI)
 .then(() => console.log('✅ MongoDB Connected Successfully!'))
 .catch(err => console.log('❌ MongoDB Error:', err.message));
 
-// Routes
+// ROUTES - Make sure these files exist
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/comments', require('./routes/comments'));

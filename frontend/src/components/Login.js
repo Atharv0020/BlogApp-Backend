@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../redux/slices/authSlice';
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { loading, error } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -18,7 +19,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await dispatch(login(formData));
-    if (result.payload.token) {
+    if (result.payload && result.payload.token) {
       navigate('/');
     }
   };
@@ -26,6 +27,7 @@ const Login = () => {
   return (
     <div className="auth-form">
       <h2>Login</h2>
+      {error && <div className="error">{error}</div>}
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -43,7 +45,9 @@ const Login = () => {
           onChange={handleChange}
           required
         />
-        <button type="submit">Login</button>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
       </form>
     </div>
   );

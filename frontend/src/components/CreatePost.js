@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { createPost } from '../redux/slices/postSlice';
 
 const CreatePost = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -18,9 +19,26 @@ const CreatePost = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(createPost(formData));
-    if (result.payload._id) {
-      navigate('/');
+    
+    // Check if user is logged in
+    if (!user) {
+      alert('Please login to create a post');
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      const result = await dispatch(createPost(formData));
+      
+      // Check if post was created successfully
+      if (result.payload && result.payload._id) {
+        navigate('/');
+      } else if (result.error) {
+        alert(result.error.message || 'Failed to create post');
+      }
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Something went wrong. Please try again.');
     }
   };
 
