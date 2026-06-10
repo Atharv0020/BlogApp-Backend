@@ -11,7 +11,6 @@ const PostDetail = () => {
   const { posts } = useSelector((state) => state.posts);
   const { comments } = useSelector((state) => state.comments);
   const [commentText, setCommentText] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   
   const post = posts.find(p => p._id === id);
   const postComments = comments[id] || [];
@@ -34,6 +33,10 @@ const PostDetail = () => {
   const handleAddComment = async (e) => {
     e.preventDefault();
     
+    console.log('Comment button clicked');
+    console.log('User:', user);
+    console.log('Comment text:', commentText);
+    
     if (!user) {
       alert('Please login to comment');
       return;
@@ -44,27 +47,22 @@ const PostDetail = () => {
       return;
     }
     
-    setSubmitting(true);
-    
     try {
-      const result = await dispatch(addComment({ postId: id, text: commentText }));
+      const result = await dispatch(addComment({ 
+        postId: id, 
+        text: commentText 
+      })).unwrap();
       
-      if (result.payload && result.payload._id) {
+      console.log('Result:', result);
+      
+      if (result && result._id) {
         setCommentText('');
+        dispatch(fetchComments(id));
         alert('Comment added successfully!');
-      } else {
-        alert('Failed to add comment');
       }
     } catch (error) {
-      alert('Error: ' + error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDeleteComment = (commentId) => {
-    if (window.confirm('Delete this comment?')) {
-      dispatch(deleteComment(commentId));
+      console.error('Error:', error);
+      alert('Failed: ' + (error.message || 'Unknown error'));
     }
   };
 
@@ -96,9 +94,10 @@ const PostDetail = () => {
               placeholder="Write a comment..."
               required
               rows="3"
+              style={{ width: '100%', padding: '10px' }}
             />
-            <button type="submit" disabled={submitting}>
-              {submitting ? 'Posting...' : 'Post Comment'}
+            <button type="submit" style={{ marginTop: '10px', padding: '10px 20px' }}>
+              Post Comment
             </button>
           </form>
         ) : (
@@ -110,17 +109,17 @@ const PostDetail = () => {
             <p>No comments yet. Be the first to comment!</p>
           ) : (
             postComments.map((comment) => (
-              <div key={comment._id} className="comment">
+              <div key={comment._id} className="comment" style={{ border: '1px solid #ddd', margin: '10px 0', padding: '10px', borderRadius: '5px' }}>
                 <div className="comment-header">
                   <strong>{comment.userName}</strong>
-                  <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
+                  <span style={{ marginLeft: '10px', color: '#666' }}>{new Date(comment.createdAt).toLocaleDateString()}</span>
                   {user && user.id === comment.userId && (
-                    <button onClick={() => handleDeleteComment(comment._id)} className="delete-comment">
+                    <button onClick={() => dispatch(deleteComment(comment._id))} style={{ marginLeft: '10px', color: 'red' }}>
                       Delete
                     </button>
                   )}
                 </div>
-                <p>{comment.text}</p>
+                <p style={{ marginTop: '5px' }}>{comment.text}</p>
               </div>
             ))
           )}
