@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 
-// ========== CORS CONFIGURATION (FIXED) ==========
+// ========== CORS CONFIGURATION ==========
 const allowedOrigins = [
   'https://blog-app-backend-dako.vercel.app',
   'https://blog-app-backend.vercel.app',
@@ -19,7 +19,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
       console.log('Blocked origin:', origin);
@@ -32,29 +31,23 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
 }));
 
-// Handle preflight requests
 app.options('*', cors());
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ========== MONGODB CONNECTION ==========
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://atharvmore0009_db_user:atharv09@am.lsminjv.mongodb.net/blogapp?retryWrites=true&w=majority';
 
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(MONGODB_URI)
 .then(() => {
   console.log('✅ MongoDB Connected Successfully!');
   console.log('📊 Database: MongoDB Atlas');
 })
 .catch(err => {
   console.log('❌ MongoDB Error:', err.message);
-  console.log('⚠️ Continuing with limited functionality...');
 });
 
-// ========== DEBUG ROUTE (Check if routes are loaded) ==========
+// ========== DEBUG ROUTE ==========
 app.get('/debug-routes', (req, res) => {
   const fs = require('fs');
   try {
@@ -76,7 +69,6 @@ app.get('/debug-routes', (req, res) => {
 // ========== API ROUTES ==========
 console.log('📡 Loading API routes...');
 
-// Auth routes
 try {
   app.use('/api/auth', require('./routes/auth'));
   console.log('✅ /api/auth routes loaded');
@@ -84,7 +76,6 @@ try {
   console.log('❌ Failed to load /api/auth:', err.message);
 }
 
-// Posts routes
 try {
   app.use('/api/posts', require('./routes/posts'));
   console.log('✅ /api/posts routes loaded');
@@ -92,7 +83,6 @@ try {
   console.log('❌ Failed to load /api/posts:', err.message);
 }
 
-// Comments routes
 try {
   app.use('/api/comments', require('./routes/comments'));
   console.log('✅ /api/comments routes loaded');
@@ -101,8 +91,6 @@ try {
 }
 
 // ========== TEST ENDPOINTS ==========
-
-// Root test endpoint
 app.get('/', (req, res) => {
   res.json({
     message: 'Backend is working!',
@@ -116,7 +104,6 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
@@ -125,8 +112,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 404 handler for undefined routes
-app.use('*', (req, res) => {
+// ========== 404 HANDLER - FIXED (removed the invalid * parameter) ==========
+app.use((req, res) => {
   res.status(404).json({
     error: 'Route not found',
     message: `Cannot ${req.method} ${req.originalUrl}`,
