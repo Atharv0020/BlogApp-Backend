@@ -19,7 +19,7 @@ const Home = () => {
     <div className="home">
       <h1>All Posts</h1>
       {posts.length === 0 ? (
-        <p>No posts yet. Be the first to create one!</p>
+        <p style={{ color: 'white', textAlign: 'center' }}>No posts yet. Create one!</p>
       ) : (
         posts.map((post) => <Post key={post._id} post={post} />)
       )}

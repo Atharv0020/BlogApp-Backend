@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 
-module.exports = async (req, res, next) => {
+module.exports = (req, res, next) => {
   const token = req.header('x-auth-token');
   
   if (!token) {
@@ -11,11 +10,7 @@ module.exports = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, 'secretkey');
     req.userId = decoded.userId;
-    const user = await User.findById(req.userId);
-    if (!user) {
-      return res.status(401).json({ msg: 'User not found' });
-    }
-    req.userName = user.name;
+    req.userName = decoded.userName || 'User';
     next();
   } catch (err) {
     res.status(401).json({ msg: 'Token is not valid' });

@@ -10,11 +10,9 @@ export const fetchComments = createAsyncThunk('comments/fetchComments', async (p
 
 export const addComment = createAsyncThunk('comments/addComment', async ({ postId, text }) => {
   const token = localStorage.getItem('token');
-  const response = await axios.post(
-    `${API_URL}/comments`,
-    { postId, text },
-    { headers: { 'x-auth-token': token } }
-  );
+  const response = await axios.post(`${API_URL}/comments`, { postId, text }, {
+    headers: { 'x-auth-token': token }
+  });
   return response.data;
 });
 
@@ -28,7 +26,11 @@ export const deleteComment = createAsyncThunk('comments/deleteComment', async (i
 
 const commentSlice = createSlice({
   name: 'comments',
-  initialState: { comments: {}, loading: false, error: null },
+  initialState: {
+    comments: {},
+    loading: false,
+    error: null
+  },
   reducers: {},
   extraReducers: (builder) => {
     builder

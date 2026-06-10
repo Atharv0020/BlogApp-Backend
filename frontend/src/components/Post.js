@@ -11,21 +11,19 @@ const Post = ({ post }) => {
     if (user) {
       dispatch(likePost(post._id));
     } else {
-      alert('Please login to like posts');
+      alert('Please login to like');
     }
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
+    if (window.confirm('Delete this post?')) {
       dispatch(deletePost(post._id));
     }
   };
 
   return (
     <div className="post-card">
-      {post.image && (
-        <img src={post.image} alt={post.title} className="post-image" />
-      )}
+      {post.image && <img src={post.image} alt={post.title} className="post-image" />}
       <div className="post-content">
         <h2>{post.title}</h2>
         <p className="post-meta">
@@ -38,9 +36,7 @@ const Post = ({ post }) => {
             ❤️ {post.likeCount} Likes
           </button>
           {user && user.id === post.author && (
-            <button onClick={handleDelete} className="delete-btn">
-              🗑️ Delete
-            </button>
+            <button onClick={handleDelete} className="delete-btn">Delete</button>
           )}
         </div>
       </div>
