@@ -9,7 +9,8 @@ router.get('/post/:postId', async (req, res) => {
     const comments = await Comment.find({ postId: req.params.postId }).sort({ createdAt: -1 });
     res.json(comments);
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 });
 
@@ -17,18 +18,19 @@ router.get('/post/:postId', async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     const { postId, text } = req.body;
-    
+
     const newComment = new Comment({
       postId,
       userId: req.userId,
       userName: req.userName,
       text
     });
-    
+
     const comment = await newComment.save();
     res.json(comment);
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 });
 
@@ -36,19 +38,20 @@ router.post('/', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.id);
-    
+
     if (!comment) {
       return res.status(404).json({ msg: 'Comment not found' });
     }
-    
+
     if (comment.userId.toString() !== req.userId) {
       return res.status(401).json({ msg: 'Not authorized' });
     }
-    
+
     await comment.deleteOne();
     res.json({ msg: 'Comment deleted' });
   } catch (err) {
-    res.status(500).send('Server error');
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server error' });
   }
 });
 
